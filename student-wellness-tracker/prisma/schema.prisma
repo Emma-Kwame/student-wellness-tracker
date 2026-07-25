@@ -1,0 +1,493 @@
+// ---------------------------------------------------------------------------
+// Student Wellness Tracker — Database Schema
+//
+// Phase 1 wires up: User, Session, Account, Verification (Better Auth) and
+// UserProfile. Every other domain model is declared now so migrations don't
+// need to be rewritten each phase, but they're built out feature-by-feature
+// in Phases 2–5. Soft deletes (`deletedAt`) are used on user-authored,
+// undo-able records; auth/session tables use hard deletes by design.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+  // Prisma 7 requires an explicit output path for the generated client.
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// AUTH (Better Auth core tables — field names/shape follow its Prisma adapter)
+// =============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  profile UserProfile?
+
+  moodEntries      MoodEntry[]
+  studySessions    StudySession[]
+  courses          Course[]
+  sleepLogs        SleepLog[]
+  waterLogs        WaterLog[]
+  exerciseLogs     ExerciseLog[]
+  attendanceRecords AttendanceRecord[]
+  tasks            Task[]
+  goals            Goal[]
+  journalEntries   JournalEntry[]
+  notifications    Notification[]
+  aiInsights       AiInsight[]
+  achievements     UserAchievement[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// =============================================================================
+// PROFILE
+// =============================================================================
+
+model UserProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  university            String?
+  major                 String?
+  yearOfStudy           Int?
+  timezone              String   @default("UTC")
+  dailyWaterGoalMl      Int      @default(2000)
+  dailySleepGoalHours   Float    @default(8)
+  dailyStudyGoalHours   Float    @default(3)
+  dailyExerciseGoalMins Int      @default(30)
+  attendanceThreshold   Int      @default(75) // percent — below this triggers a warning
+  xp                    Int      @default(0)
+  level                 Int      @default(1)
+  currentStreak         Int      @default(0)
+  longestStreak         Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// =============================================================================
+// MOOD
+// =============================================================================
+
+enum Mood {
+  HAPPY
+  NEUTRAL
+  SAD
+  STRESSED
+  TIRED
+  EXCITED
+  MOTIVATED
+}
+
+model MoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  mood      Mood
+  note      String?
+  loggedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+  @@map("mood_entries")
+}
+
+// =============================================================================
+// STUDY
+// =============================================================================
+
+model Course {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  code      String?
+  color     String   @default("#4B4FE0")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studySessions     StudySession[]
+  attendanceRecords AttendanceRecord[]
+
+  @@index([userId])
+  @@map("courses")
+}
+
+model StudySession {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String?
+  startedAt   DateTime
+  endedAt     DateTime?
+  durationMin Int? // denormalized for fast aggregation once session ends
+  isPomodoro  Boolean   @default(false)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startedAt])
+  @@index([courseId])
+  @@map("study_sessions")
+}
+
+// =============================================================================
+// SLEEP
+// =============================================================================
+
+enum SleepQuality {
+  POOR
+  FAIR
+  GOOD
+  EXCELLENT
+}
+
+model SleepLog {
+  id            String       @id @default(cuid())
+  userId        String
+  bedtime       DateTime
+  wakeTime      DateTime
+  durationMin   Int
+  quality       SleepQuality @default(FAIR)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bedtime])
+  @@map("sleep_logs")
+}
+
+// =============================================================================
+// HYDRATION
+// =============================================================================
+
+model WaterLog {
+  id        String   @id @default(cuid())
+  userId    String
+  amountMl  Int
+  loggedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+  @@map("water_logs")
+}
+
+// =============================================================================
+// EXERCISE
+// =============================================================================
+
+enum ExerciseType {
+  WALKING
+  RUNNING
+  GYM
+  FOOTBALL
+  CYCLING
+  YOGA
+  OTHER
+}
+
+enum ExerciseIntensity {
+  LOW
+  MODERATE
+  HIGH
+}
+
+model ExerciseLog {
+  id          String            @id @default(cuid())
+  userId      String
+  type        ExerciseType
+  durationMin Int
+  calories    Int?
+  intensity   ExerciseIntensity @default(MODERATE)
+  loggedAt    DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+  @@map("exercise_logs")
+}
+
+// =============================================================================
+// ATTENDANCE
+// =============================================================================
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+}
+
+model AttendanceRecord {
+  id        String           @id @default(cuid())
+  userId    String
+  courseId  String
+  status    AttendanceStatus
+  date      DateTime         @db.Date
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, date])
+  @@index([userId, courseId])
+  @@map("attendance_records")
+}
+
+// =============================================================================
+// TASKS
+// =============================================================================
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskCategory {
+  ACADEMIC
+  PERSONAL
+  HEALTH
+  SOCIAL
+  OTHER
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  dueDate     DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  category    TaskCategory @default(ACADEMIC)
+  isCompleted Boolean      @default(false)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dueDate])
+  @@index([userId, isCompleted])
+  @@map("tasks")
+}
+
+// =============================================================================
+// GOALS
+// =============================================================================
+
+enum GoalType {
+  STUDY_HOURS
+  WATER_GLASSES
+  SLEEP_HOURS
+  EXERCISE_MINUTES
+  CUSTOM
+}
+
+model Goal {
+  id           String    @id @default(cuid())
+  userId       String
+  type         GoalType
+  label        String
+  targetValue  Float
+  currentValue Float     @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@map("goals")
+}
+
+// =============================================================================
+// JOURNAL
+// =============================================================================
+
+model JournalEntry {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String?
+  content   String // rich text stored as HTML/JSON from the editor
+  loggedAt  DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+  @@map("journal_entries")
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+enum NotificationType {
+  WATER
+  SLEEP
+  STUDY
+  EXERCISE
+  ASSIGNMENT
+  SYSTEM
+}
+
+model Notification {
+  id        String            @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean           @default(false)
+  scheduledFor DateTime?
+  sentAt    DateTime?
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// =============================================================================
+// AI INSIGHTS
+// =============================================================================
+
+enum AiInsightKind {
+  DAILY_SUMMARY
+  WEEKLY_REPORT
+  RECOMMENDATION
+  MOTIVATIONAL
+}
+
+model AiInsight {
+  id        String        @id @default(cuid())
+  userId    String
+  kind      AiInsightKind
+  content   String
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, createdAt])
+  @@map("ai_insights")
+}
+
+// =============================================================================
+// GAMIFICATION
+// =============================================================================
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. "7_day_study_streak"
+  title       String
+  description String
+  icon        String // lucide icon name or emoji
+  xpReward    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  users UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}

@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+/* next-themes toggles a `.dark` class on <html> — this teaches Tailwind's
+   `dark:` variant to key off that class instead of `prefers-color-scheme`. */
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+ * Design tokens — "rhythm" palette
+ * Two accents carry the product's core tension on purpose: `focus` (indigo)
+ * is the study/attention side, `vitality` (sage-mint) is the wellness side,
+ * `dawn` (amber) marks momentum — streaks, XP, gamification. Neutrals stay
+ * cool, not the common warm-cream default. OKLCH throughout, per Tailwind v4
+ * convention — swap these visually in-browser before launch; they're a
+ * deliberate starting palette, not colorimetrically tuned.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --paper: oklch(0.98 0.004 260);
+  --ink: oklch(0.22 0.02 260);
+  --card: oklch(1 0 0);
+  --muted: oklch(0.55 0.01 260);
+  --line: oklch(0.9 0.006 260);
+
+  --focus: oklch(0.58 0.19 264);
+  --focus-foreground: oklch(1 0 0);
+
+  --vitality: oklch(0.62 0.11 165);
+  --vitality-foreground: oklch(1 0 0);
+
+  --dawn: oklch(0.78 0.15 75);
+  --dawn-foreground: oklch(0.32 0.06 55);
+
+  --danger: oklch(0.58 0.22 27);
+  --danger-foreground: oklch(1 0 0);
+}
+
+.dark {
+  --paper: oklch(0.16 0.02 260);
+  --ink: oklch(0.95 0.005 260);
+  --card: oklch(0.2 0.02 260);
+  --muted: oklch(0.68 0.01 260);
+  --line: oklch(0.32 0.02 260);
+
+  --focus: oklch(0.72 0.17 264);
+  --focus-foreground: oklch(0.2 0.02 260);
+
+  --vitality: oklch(0.74 0.12 165);
+  --vitality-foreground: oklch(0.2 0.02 260);
+
+  --dawn: oklch(0.8 0.14 75);
+  --dawn-foreground: oklch(0.28 0.05 55);
+
+  --danger: oklch(0.65 0.2 27);
+  --danger-foreground: oklch(1 0 0);
+}
+
+/* Expose the tokens above as Tailwind utilities: bg-paper, text-ink,
+   border-line, bg-focus/10, ring-focus, etc. — including opacity modifiers,
+   which Tailwind v4 derives automatically for anything declared here. */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+
+  --color-focus: var(--focus);
+  --color-focus-foreground: var(--focus-foreground);
+  --color-vitality: var(--vitality);
+  --color-vitality-foreground: var(--vitality-foreground);
+  --color-dawn: var(--dawn);
+  --color-dawn-foreground: var(--dawn-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+
+  /* shadcn-style aliases so `bg-background`, `text-foreground`, `bg-primary`
+     etc. also resolve, in case Phase 2+ pulls in shadcn components as-is. */
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--focus);
+  --color-primary: var(--focus);
+  --color-primary-foreground: var(--focus-foreground);
+  --color-secondary: var(--card);
+  --color-secondary-foreground: var(--ink);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
+
+  /* Type — Geist ships its own CSS variable names; bridge them to the
+     semantic names components actually use (font-display/sans/mono). */
+  --font-display: var(--font-fraunces), ui-serif, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  --shadow-soft: 0 1px 2px oklch(0.22 0.02 260 / 0.04), 0 8px 24px -8px oklch(0.22 0.02 260 / 0.1);
+  --shadow-glass: 0 1px 1px oklch(0.22 0.02 260 / 0.05), 0 12px 40px -12px oklch(0.22 0.02 260 / 0.18);
+
+  --animate-flow-dash: flow-dash 2.4s ease-out forwards;
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-pulse-soft: pulse-soft 2.5s ease-in-out infinite;
+}
+
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-line;
+  }
+
+  body {
+    @apply bg-paper text-ink antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Visible keyboard focus everywhere, styled instead of suppressed. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-focus ring-offset-2 ring-offset-paper;
+  }
+
+  ::selection {
+    @apply bg-focus/20;
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism surface used by nav bars, floating cards, and modals. */
+  .glass {
+    @apply bg-card/70 backdrop-blur-md border border-line/80 shadow-glass;
+  }
+
+  .glass-strong {
+    @apply bg-card/85 backdrop-blur-lg border border-line shadow-glass;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
