@@ -1,12 +1,11 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TaskForm } from "@/components/trackers/task-form";
 import { TaskList } from "@/components/trackers/task-list";
 
 export default async function TasksPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const tasks = await prisma.task.findMany({
     where: { userId: session!.user.id, deletedAt: null },
     orderBy: [{ isCompleted: "asc" }, { dueDate: { sort: "asc", nulls: "last" } }, { priority: "desc" }],

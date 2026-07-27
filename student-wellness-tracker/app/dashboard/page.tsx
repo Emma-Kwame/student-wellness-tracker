@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
 import { Moon, BookOpen, Dumbbell, CalendarCheck } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { getDashboardData } from "@/lib/dashboard-data";
 import { formatMinutes } from "@/lib/utils";
 import { quoteOfTheDay } from "@/lib/wellness";
@@ -16,7 +15,7 @@ import { QuoteCard, AiInsightCard } from "@/components/dashboard/quote-and-insig
 import { CalendarStrip } from "@/components/dashboard/calendar-strip";
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const firstName = session!.user.name.split(" ")[0] ?? "there";
 
   const data = await getDashboardData(session!.user.id);

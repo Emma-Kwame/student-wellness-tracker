@@ -1,6 +1,14 @@
 import "server-only";
+import { cache } from "react";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+
+// Every dashboard layout/page/action calls this at least once per request.
+// React's cache() dedupes it per request so a single navigation only pays
+// for one session round trip instead of one per layout/page that needs it.
+export const getSession = cache(async () => {
+  return auth.api.getSession({ headers: await headers() });
+});
 
 /**
  * Resolves the current user's id from the session cookie. Every server
@@ -9,7 +17,7 @@ import { auth } from "@/lib/auth";
  * userId (which would be an IDOR waiting to happen).
  */
 export async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!session) {
     throw new Error("UNAUTHENTICATED");
   }

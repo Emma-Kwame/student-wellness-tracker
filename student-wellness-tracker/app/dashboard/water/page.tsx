@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { startOfDay, endOfDay } from "@/lib/wellness";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
