@@ -10,7 +10,8 @@ export const sleepLogSchema = z
   .object({
     bedtime: z.string().min(1, "Required"), // datetime-local string
     wakeTime: z.string().min(1, "Required"),
-    quality: z.enum(["POOR", "FAIR", "GOOD", "EXCELLENT"]),
+    quality: z.enum(["POOR", "FAIR", "GOOD", "GREAT", "EXCELLENT"]),
+    restedness: z.enum(["EXHAUSTED", "OKAY", "REFRESHED"]).optional(),
   })
   .refine((data) => new Date(data.wakeTime) > new Date(data.bedtime), {
     message: "Wake time must be after bedtime",

@@ -14,7 +14,7 @@ export async function logSleep(input: SleepLogInput) {
   const durationMin = Math.round((wakeTime.getTime() - bedtime.getTime()) / 60_000);
 
   await prisma.sleepLog.create({
-    data: { userId, bedtime, wakeTime, durationMin, quality: data.quality },
+    data: { userId, bedtime, wakeTime, durationMin, quality: data.quality, restedness: data.restedness },
   });
 
   revalidatePath("/dashboard");

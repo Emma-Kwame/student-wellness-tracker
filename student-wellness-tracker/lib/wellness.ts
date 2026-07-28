@@ -1,4 +1,4 @@
-import type { Mood, AttendanceStatus } from "@/generated/prisma/client";
+import type { Mood, AttendanceStatus, SleepQuality, Restedness } from "@/generated/prisma/client";
 
 export function startOfDay(date = new Date()): Date {
   const d = new Date(date);
@@ -122,6 +122,120 @@ export const MOOD_SCORE: Record<Mood, number> = {
   HAPPY: 4,
   AMAZING: 5,
 };
+
+export const SLEEP_QUALITY_META: Record<SleepQuality, { emoji: string; label: string; value: number }> = {
+  POOR: { emoji: "😴", label: "Poor", value: 1 },
+  FAIR: { emoji: "😐", label: "Fair", value: 2 },
+  GOOD: { emoji: "🙂", label: "Good", value: 3 },
+  GREAT: { emoji: "😊", label: "Great", value: 4 },
+  EXCELLENT: { emoji: "🤩", label: "Excellent", value: 5 },
+};
+
+export const ALL_SLEEP_QUALITIES = Object.keys(SLEEP_QUALITY_META) as SleepQuality[];
+
+/** Worst-to-best color scale, mirroring the mood picker's visual language. */
+export const SLEEP_QUALITY_COLORS: Record<SleepQuality, { bg: string; text: string; ring: string; selectedBg: string }> = {
+  POOR: {
+    bg: "bg-red-50 dark:bg-red-500/10",
+    text: "text-red-600 dark:text-red-400",
+    ring: "ring-red-400",
+    selectedBg: "bg-red-100 dark:bg-red-500/20",
+  },
+  FAIR: {
+    bg: "bg-orange-50 dark:bg-orange-500/10",
+    text: "text-orange-600 dark:text-orange-400",
+    ring: "ring-orange-400",
+    selectedBg: "bg-orange-100 dark:bg-orange-500/20",
+  },
+  GOOD: {
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+    text: "text-amber-600 dark:text-amber-400",
+    ring: "ring-amber-400",
+    selectedBg: "bg-amber-100 dark:bg-amber-500/20",
+  },
+  GREAT: {
+    bg: "bg-lime-50 dark:bg-lime-500/10",
+    text: "text-lime-600 dark:text-lime-400",
+    ring: "ring-lime-400",
+    selectedBg: "bg-lime-100 dark:bg-lime-500/20",
+  },
+  EXCELLENT: {
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+    ring: "ring-emerald-400",
+    selectedBg: "bg-emerald-100 dark:bg-emerald-500/20",
+  },
+};
+
+export const RESTEDNESS_META: Record<Restedness, { emoji: string; label: string }> = {
+  EXHAUSTED: { emoji: "😴", label: "Exhausted" },
+  OKAY: { emoji: "😐", label: "Okay" },
+  REFRESHED: { emoji: "😊", label: "Refreshed" },
+};
+
+export const ALL_RESTEDNESS = Object.keys(RESTEDNESS_META) as Restedness[];
+
+export const IDEAL_SLEEP_HOURS = { min: 7, max: 9 };
+
+/** 0–100: 60% how close duration is to the 7–9h ideal band, 40% self-rated quality. */
+export function computeSleepScore(durationMin: number, quality: SleepQuality): number {
+  const hours = durationMin / 60;
+  const { min, max } = IDEAL_SLEEP_HOURS;
+  const deviation = hours < min ? min - hours : hours > max ? hours - max : 0;
+  const durationScore = Math.max(0, 100 - deviation * 15);
+  const qualityScore = (SLEEP_QUALITY_META[quality].value / 5) * 100;
+  return Math.round(durationScore * 0.6 + qualityScore * 0.4);
+}
+
+export function sleepScoreBand(score: number): { label: string; dot: string; text: string } {
+  if (score >= 85) return { label: "Excellent", dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" };
+  if (score >= 70) return { label: "Good", dot: "bg-amber-400", text: "text-amber-600 dark:text-amber-400" };
+  if (score >= 50) return { label: "Fair", dot: "bg-orange-500", text: "text-orange-600 dark:text-orange-400" };
+  return { label: "Poor", dot: "bg-red-500", text: "text-red-600 dark:text-red-400" };
+}
+
+/** A plain-language nudge based on how the logged duration compares to the
+ * recommended 7–9h band — shown live in the form and on the summary card. */
+export function sleepRecommendation(durationMin: number): { message: string; isGood: boolean } {
+  const hours = durationMin / 60;
+  const { min, max } = IDEAL_SLEEP_HOURS;
+  if (hours < min) {
+    return {
+      message: `⚠️ You slept only ${formatSleepDuration(durationMin)}. Aim for ${min}–${max} hours of sleep.`,
+      isGood: false,
+    };
+  }
+  if (hours > max) {
+    return {
+      message: `😴 That's ${formatSleepDuration(durationMin)} — more than the usual ${min}–${max}h range. If you're oversleeping often, it's worth mentioning to a doctor.`,
+      isGood: false,
+    };
+  }
+  return { message: "🌙 Great job! You met the recommended sleep duration.", isGood: true };
+}
+
+export function formatSleepDuration(durationMin: number): string {
+  const hours = Math.floor(durationMin / 60);
+  const minutes = durationMin % 60;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+}
+
+const SLEEP_TIPS = [
+  "💡 Avoid screens 30 minutes before bed — blue light delays your body's melatonin release.",
+  "💡 Keep your room cool, ideally around 18°C (65°F), for deeper sleep.",
+  "💡 Consistent sleep schedules improve concentration more than extra weekend sleep-ins.",
+  "💡 Caffeine can affect sleep up to 6 hours after drinking it — cut off by early afternoon.",
+  "💡 A short walk after lunch can improve how quickly you fall asleep at night.",
+  "💡 If you can't fall asleep in 20 minutes, get up and do something calm until you feel drowsy.",
+  "💡 Naps under 30 minutes boost alertness without wrecking your nighttime sleep.",
+];
+
+/** Deterministic by date, not random — same tip all day, changes tomorrow. */
+export function sleepTipOfTheDay(date = new Date()): string {
+  const dayIndex = Math.floor(date.getTime() / 86_400_000);
+  return SLEEP_TIPS[dayIndex % SLEEP_TIPS.length]!;
+}
 
 /** 0–100 ratio, capped, for combining unlike units (ml, minutes, hours) into one score. */
 export function ratio(value: number, goal: number): number {
