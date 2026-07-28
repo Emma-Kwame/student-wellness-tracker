@@ -1,17 +1,6 @@
 import Link from "next/link";
-import { Quote, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-
-export function QuoteCard({ quote }: { quote: string }) {
-  return (
-    <Card className="glass-strong">
-      <CardContent className="flex items-start gap-3 p-5">
-        <Quote className="mt-0.5 h-4 w-4 shrink-0 text-focus" />
-        <p className="font-display text-base italic leading-snug">{quote}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 // Static placeholder copy — wiring this to real generated insights needs
 // ANTHROPIC_API_KEY configured (see .env.example); that's a separate step.

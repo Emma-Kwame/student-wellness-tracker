@@ -67,6 +67,12 @@ export const taskSchema = z.object({
 });
 export type TaskInput = z.infer<typeof taskSchema>;
 
+export const journalEntrySchema = z.object({
+  title: z.string().max(120).optional(),
+  content: z.string().min(1, "Write something first").max(10000),
+});
+export type JournalEntryInput = z.infer<typeof journalEntrySchema>;
+
 export const goalSchema = z.object({
   type: z.enum(["STUDY_HOURS", "WATER_GLASSES", "SLEEP_HOURS", "EXERCISE_MINUTES", "CUSTOM"]),
   label: z.string().min(1, "Give it a short label").max(120),

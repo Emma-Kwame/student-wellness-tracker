@@ -8,6 +8,7 @@ import {
   computeAttendanceRate,
   computeGoalProgress,
   MOOD_SCORE,
+  type WellnessGoals,
 } from "@/lib/wellness";
 import { getTodayStats } from "@/lib/today-stats";
 
@@ -19,31 +20,12 @@ export interface WeeklyPoint {
   mood: number | null;
 }
 
-export async function getDashboardData(userId: string) {
+/** Buckets the last 7 days of logs into one point per day, for the weekly
+ * trend chart on both the dashboard and the analytics page. */
+export async function getWeeklyProgress(userId: string, goals: WellnessGoals): Promise<WeeklyPoint[]> {
   const weekStart = daysAgo(6); // last 7 days, inclusive of today
 
-  const [
-    profile,
-    todayMood,
-    todayStats,
-    weekStudySessions,
-    weekSleepLogs,
-    weekMoodEntries,
-    weekWaterLogs,
-    weekExerciseLogs,
-    attendanceRecords,
-    upcomingTasks,
-    tasksDueToday,
-    activeGoals,
-    allAchievements,
-    unlockedAchievements,
-  ] = await Promise.all([
-    prisma.userProfile.findUniqueOrThrow({ where: { userId } }),
-    prisma.moodEntry.findFirst({
-      where: { userId, deletedAt: null, loggedAt: { gte: startOfDay(), lte: endOfDay() } },
-      orderBy: { loggedAt: "desc" },
-    }),
-    getTodayStats(userId),
+  const [weekStudySessions, weekSleepLogs, weekMoodEntries, weekWaterLogs, weekExerciseLogs] = await Promise.all([
     prisma.studySession.findMany({
       where: { userId, deletedAt: null, startedAt: { gte: weekStart } },
       select: { startedAt: true, durationMin: true },
@@ -64,27 +46,9 @@ export async function getDashboardData(userId: string) {
       where: { userId, deletedAt: null, loggedAt: { gte: weekStart } },
       select: { loggedAt: true, durationMin: true },
     }),
-    prisma.attendanceRecord.findMany({ where: { userId } }),
-    prisma.task.findMany({
-      where: { userId, deletedAt: null, isCompleted: false },
-      orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { priority: "desc" }],
-      take: 5,
-    }),
-    prisma.task.findMany({
-      where: { userId, deletedAt: null, dueDate: { gte: startOfDay(), lte: endOfDay() } },
-      select: { isCompleted: true },
-    }),
-    prisma.goal.findMany({ where: { userId, deletedAt: null, isActive: true } }),
-    prisma.achievement.findMany({ orderBy: { title: "asc" } }),
-    prisma.userAchievement.findMany({ where: { userId }, select: { achievementId: true } }),
   ]);
 
-  const wellnessScore = computeWellnessScore(todayStats, profile);
-  const attendanceRate = computeAttendanceRate(attendanceRecords);
-
-  // Bucket the week's logs into 7 daily points for the trend chart — one pass
-  // per metric, keyed on the same day boundaries so tabs line up on the x-axis.
-  const weeklyProgress: WeeklyPoint[] = Array.from({ length: 7 }).map((_, i) => {
+  return Array.from({ length: 7 }).map((_, i) => {
     const day = daysAgo(6 - i);
     const label = day.toLocaleDateString("en-US", { weekday: "short" });
     const isSameDay = (d: Date) => startOfDay(d).getTime() === day.getTime();
@@ -105,10 +69,51 @@ export async function getDashboardData(userId: string) {
         ? null
         : Math.round((dayMoods.reduce((sum, m) => sum + MOOD_SCORE[m.mood], 0) / dayMoods.length) * 10) / 10;
 
-    const overview = computeWellnessScore({ sleepHours, waterMl, studyMinutes, exerciseMinutes }, profile);
+    const overview = computeWellnessScore({ sleepHours, waterMl, studyMinutes, exerciseMinutes }, goals);
 
     return { date: label, overview, study: studyMinutes, sleep: Math.round(sleepHours * 10) / 10, mood };
   });
+}
+
+export async function getDashboardData(userId: string) {
+  // profile is needed by getWeeklyProgress's goal ratios, so it's fetched
+  // once up front and reused rather than queried twice in parallel.
+  const profile = await prisma.userProfile.findUniqueOrThrow({ where: { userId } });
+
+  const [
+    todayMood,
+    todayStats,
+    attendanceRecords,
+    upcomingTasks,
+    tasksDueToday,
+    activeGoals,
+    allAchievements,
+    unlockedAchievements,
+    weeklyProgress,
+  ] = await Promise.all([
+    prisma.moodEntry.findFirst({
+      where: { userId, deletedAt: null, loggedAt: { gte: startOfDay(), lte: endOfDay() } },
+      orderBy: { loggedAt: "desc" },
+    }),
+    getTodayStats(userId),
+    prisma.attendanceRecord.findMany({ where: { userId } }),
+    prisma.task.findMany({
+      where: { userId, deletedAt: null, isCompleted: false },
+      orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { priority: "desc" }],
+      take: 5,
+    }),
+    prisma.task.findMany({
+      where: { userId, deletedAt: null, dueDate: { gte: startOfDay(), lte: endOfDay() } },
+      select: { isCompleted: true },
+    }),
+    prisma.goal.findMany({ where: { userId, deletedAt: null, isActive: true } }),
+    prisma.achievement.findMany({ orderBy: { title: "asc" } }),
+    prisma.userAchievement.findMany({ where: { userId }, select: { achievementId: true } }),
+    getWeeklyProgress(userId, profile),
+  ]);
+
+  const wellnessScore = computeWellnessScore(todayStats, profile);
+  const attendanceRate = computeAttendanceRate(attendanceRecords);
 
   const unlockedIds = new Set(unlockedAchievements.map((a) => a.achievementId));
 

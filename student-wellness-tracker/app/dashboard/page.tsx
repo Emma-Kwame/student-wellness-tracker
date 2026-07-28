@@ -11,7 +11,7 @@ import { WeeklyProgressChart } from "@/components/dashboard/weekly-progress-char
 import { TasksWidget } from "@/components/dashboard/tasks-widget";
 import { AchievementHighlightCard } from "@/components/dashboard/achievement-highlight-card";
 import { TodayGoalTracker } from "@/components/dashboard/today-goal-tracker";
-import { AiInsightCard } from "@/components/dashboard/quote-and-insight-card";
+import { AiInsightCard } from "@/components/dashboard/ai-insight-card";
 import { QuickReflectionCard } from "@/components/dashboard/quick-reflection-card";
 
 function greeting(): string {
