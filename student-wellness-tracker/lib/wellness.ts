@@ -30,8 +30,19 @@ export const MOOD_META: Record<Mood, { emoji: string; label: string }> = {
 
 export const ALL_MOODS = Object.keys(MOOD_META) as Mood[];
 
+/** 1–5 scale for charting mood trends alongside numeric metrics like sleep/study. */
+export const MOOD_SCORE: Record<Mood, number> = {
+  STRESSED: 1,
+  SAD: 2,
+  TIRED: 2,
+  NEUTRAL: 3,
+  HAPPY: 4,
+  MOTIVATED: 4,
+  EXCITED: 5,
+};
+
 /** 0–100 ratio, capped, for combining unlike units (ml, minutes, hours) into one score. */
-function ratio(value: number, goal: number): number {
+export function ratio(value: number, goal: number): number {
   if (goal <= 0) return 0;
   return Math.max(0, Math.min(1, value / goal)) * 100;
 }

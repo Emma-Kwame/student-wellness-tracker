@@ -7,8 +7,17 @@ import {
   computeWellnessScore,
   computeAttendanceRate,
   computeGoalProgress,
+  MOOD_SCORE,
 } from "@/lib/wellness";
 import { getTodayStats } from "@/lib/today-stats";
+
+export interface WeeklyPoint {
+  date: string;
+  overview: number;
+  study: number;
+  sleep: number;
+  mood: number | null;
+}
 
 export async function getDashboardData(userId: string) {
   const weekStart = daysAgo(6); // last 7 days, inclusive of today
@@ -18,6 +27,10 @@ export async function getDashboardData(userId: string) {
     todayMood,
     todayStats,
     weekStudySessions,
+    weekSleepLogs,
+    weekMoodEntries,
+    weekWaterLogs,
+    weekExerciseLogs,
     attendanceRecords,
     upcomingTasks,
     activeGoals,
@@ -34,6 +47,22 @@ export async function getDashboardData(userId: string) {
       where: { userId, deletedAt: null, startedAt: { gte: weekStart } },
       select: { startedAt: true, durationMin: true },
     }),
+    prisma.sleepLog.findMany({
+      where: { userId, deletedAt: null, wakeTime: { gte: weekStart } },
+      select: { wakeTime: true, durationMin: true },
+    }),
+    prisma.moodEntry.findMany({
+      where: { userId, deletedAt: null, loggedAt: { gte: weekStart } },
+      select: { loggedAt: true, mood: true },
+    }),
+    prisma.waterLog.findMany({
+      where: { userId, loggedAt: { gte: weekStart } },
+      select: { loggedAt: true, amountMl: true },
+    }),
+    prisma.exerciseLog.findMany({
+      where: { userId, deletedAt: null, loggedAt: { gte: weekStart } },
+      select: { loggedAt: true, durationMin: true },
+    }),
     prisma.attendanceRecord.findMany({ where: { userId } }),
     prisma.task.findMany({
       where: { userId, deletedAt: null, isCompleted: false },
@@ -48,14 +77,33 @@ export async function getDashboardData(userId: string) {
   const wellnessScore = computeWellnessScore(todayStats, profile);
   const attendanceRate = computeAttendanceRate(attendanceRecords);
 
-  // Bucket the week's study sessions into 7 daily totals for the trend chart.
-  const weeklyStudy: { date: string; minutes: number }[] = Array.from({ length: 7 }).map((_, i) => {
+  // Bucket the week's logs into 7 daily points for the trend chart — one pass
+  // per metric, keyed on the same day boundaries so tabs line up on the x-axis.
+  const weeklyProgress: WeeklyPoint[] = Array.from({ length: 7 }).map((_, i) => {
     const day = daysAgo(6 - i);
     const label = day.toLocaleDateString("en-US", { weekday: "short" });
-    const minutes = weekStudySessions
-      .filter((s) => startOfDay(s.startedAt).getTime() === day.getTime())
+    const isSameDay = (d: Date) => startOfDay(d).getTime() === day.getTime();
+
+    const studyMinutes = weekStudySessions
+      .filter((s) => isSameDay(s.startedAt))
       .reduce((sum, s) => sum + (s.durationMin ?? 0), 0);
-    return { date: label, minutes };
+    const sleepHours =
+      weekSleepLogs.filter((l) => isSameDay(l.wakeTime)).reduce((sum, l) => sum + l.durationMin, 0) / 60;
+    const waterMl = weekWaterLogs.filter((l) => isSameDay(l.loggedAt)).reduce((sum, l) => sum + l.amountMl, 0);
+    const exerciseMinutes = weekExerciseLogs
+      .filter((l) => isSameDay(l.loggedAt))
+      .reduce((sum, l) => sum + l.durationMin, 0);
+
+    const dayMoods = weekMoodEntries.filter((m) => isSameDay(m.loggedAt));
+    const mood =
+      dayMoods.length === 0
+        ? null
+        : Math.round((dayMoods.reduce((sum, m) => sum + MOOD_SCORE[m.mood], 0) / dayMoods.length) * 10) / 10;
+
+    const overview = computeWellnessScore({ sleepHours, waterMl, studyMinutes, exerciseMinutes }, profile);
+
+    void dayEnd; // day boundaries only needed for the isSameDay comparisons above
+    return { date: label, overview, study: studyMinutes, sleep: Math.round(sleepHours * 10) / 10, mood };
   });
 
   const unlockedIds = new Set(unlockedAchievements.map((a) => a.achievementId));
@@ -67,7 +115,7 @@ export async function getDashboardData(userId: string) {
     todayMood,
     todayStats,
     wellnessScore,
-    weeklyStudy,
+    weeklyProgress,
     attendanceRate,
     upcomingTasks,
     goals: goalsWithProgress,
