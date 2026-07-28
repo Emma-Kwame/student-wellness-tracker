@@ -33,6 +33,7 @@ export async function getDashboardData(userId: string) {
     weekExerciseLogs,
     attendanceRecords,
     upcomingTasks,
+    tasksDueToday,
     activeGoals,
     allAchievements,
     unlockedAchievements,
@@ -69,6 +70,10 @@ export async function getDashboardData(userId: string) {
       orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { priority: "desc" }],
       take: 5,
     }),
+    prisma.task.findMany({
+      where: { userId, deletedAt: null, dueDate: { gte: startOfDay(), lte: endOfDay() } },
+      select: { isCompleted: true },
+    }),
     prisma.goal.findMany({ where: { userId, deletedAt: null, isActive: true } }),
     prisma.achievement.findMany({ orderBy: { title: "asc" } }),
     prisma.userAchievement.findMany({ where: { userId }, select: { achievementId: true } }),
@@ -102,13 +107,17 @@ export async function getDashboardData(userId: string) {
 
     const overview = computeWellnessScore({ sleepHours, waterMl, studyMinutes, exerciseMinutes }, profile);
 
-    void dayEnd; // day boundaries only needed for the isSameDay comparisons above
     return { date: label, overview, study: studyMinutes, sleep: Math.round(sleepHours * 10) / 10, mood };
   });
 
   const unlockedIds = new Set(unlockedAchievements.map((a) => a.achievementId));
 
   const goalsWithProgress = activeGoals.map((goal) => computeGoalProgress(goal, todayStats));
+
+  const taskCompletion = {
+    completed: tasksDueToday.filter((t) => t.isCompleted).length,
+    total: tasksDueToday.length,
+  };
 
   return {
     profile,
@@ -118,6 +127,7 @@ export async function getDashboardData(userId: string) {
     weeklyProgress,
     attendanceRate,
     upcomingTasks,
+    taskCompletion,
     goals: goalsWithProgress,
     achievements: allAchievements,
     unlockedIds,
