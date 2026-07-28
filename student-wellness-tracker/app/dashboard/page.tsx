@@ -43,53 +43,51 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="space-y-6 lg:col-span-3">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr]">
-            <div className="flex items-center gap-4 rounded-2xl border border-line bg-card px-6 py-5">
-              <WellnessScoreRing score={data.wellnessScore} />
-              <div>
-                <p className="text-sm font-medium">Personal Wellness Score</p>
-                <p className="text-xs text-muted">Sleep, study, water &amp; exercise vs. today&apos;s goals</p>
-              </div>
+          <div className="flex flex-col items-start gap-4 rounded-2xl border border-line bg-card px-6 py-5 sm:flex-row sm:items-center">
+            <WellnessScoreRing score={data.wellnessScore} />
+            <div>
+              <p className="text-sm font-medium">Personal Wellness Score</p>
+              <p className="text-xs text-muted">Sleep, study, water &amp; exercise vs. today&apos;s goals</p>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <StatTile
-                icon={Moon}
-                label="Sleep"
-                value={`${data.todayStats.sleepHours.toFixed(1)}h`}
-                sublabel={`Goal ${data.profile.dailySleepGoalHours}h`}
-                href="/dashboard/sleep"
-                accent="text-focus"
-              />
-              <StatTile
-                icon={BookOpen}
-                label="Study"
-                value={formatMinutes(data.todayStats.studyMinutes)}
-                sublabel={`Goal ${data.profile.dailyStudyGoalHours}h`}
-                href="/dashboard/study"
-                accent="text-focus"
-              />
-              <StatTile
-                icon={Dumbbell}
-                label="Exercise"
-                value={formatMinutes(data.todayStats.exerciseMinutes)}
-                sublabel={`Goal ${data.profile.dailyExerciseGoalMins}m`}
-                href="/dashboard/exercise"
-                accent="text-vitality"
-              />
-              <StatTile
-                icon={CalendarCheck}
-                label="Attendance"
-                value={data.attendanceRate === null ? "—" : `${data.attendanceRate}%`}
-                sublabel={
-                  data.attendanceRate !== null && data.attendanceRate < data.profile.attendanceThreshold
-                    ? "Below your threshold"
-                    : "On track"
-                }
-                href="/dashboard/attendance"
-                accent="text-dawn"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <StatTile
+              icon={Moon}
+              label="Sleep"
+              value={`${data.todayStats.sleepHours.toFixed(1)}h`}
+              sublabel={`Goal ${data.profile.dailySleepGoalHours}h`}
+              href="/dashboard/sleep"
+              accent="text-focus"
+            />
+            <StatTile
+              icon={BookOpen}
+              label="Study"
+              value={formatMinutes(data.todayStats.studyMinutes)}
+              sublabel={`Goal ${data.profile.dailyStudyGoalHours}h`}
+              href="/dashboard/study"
+              accent="text-focus"
+            />
+            <StatTile
+              icon={Dumbbell}
+              label="Exercise"
+              value={formatMinutes(data.todayStats.exerciseMinutes)}
+              sublabel={`Goal ${data.profile.dailyExerciseGoalMins}m`}
+              href="/dashboard/exercise"
+              accent="text-vitality"
+            />
+            <StatTile
+              icon={CalendarCheck}
+              label="Attendance"
+              value={data.attendanceRate === null ? "—" : `${data.attendanceRate}%`}
+              sublabel={
+                data.attendanceRate !== null && data.attendanceRate < data.profile.attendanceThreshold
+                  ? "Below your threshold"
+                  : "On track"
+              }
+              href="/dashboard/attendance"
+              accent="text-dawn"
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

@@ -1,7 +1,7 @@
 import { deleteMoodEntry } from "@/app/actions/mood";
 import { DeleteButton } from "@/components/dashboard/delete-button";
-import { MOOD_META } from "@/lib/wellness";
-import { formatShortDate } from "@/lib/utils";
+import { MOOD_META, MOOD_COLORS } from "@/lib/wellness";
+import { formatShortDate, cn } from "@/lib/utils";
 import type { Mood } from "@/generated/prisma/client";
 
 type Entry = { id: string; mood: Mood; note: string | null; loggedAt: Date };
@@ -12,12 +12,12 @@ export function MoodHistoryList({ entries }: { entries: Entry[] }) {
   }
 
   return (
-    <ul className="divide-y divide-line">
+    <ul className="space-y-2">
       {entries.map((entry) => (
-        <li key={entry.id} className="flex items-center gap-3 py-3">
-          <span className="text-2xl">{MOOD_META[entry.mood].emoji}</span>
+        <li key={entry.id} className={cn("flex items-center gap-3 rounded-xl p-3", MOOD_COLORS[entry.mood].bg)}>
+          <span className="text-2xl leading-none">{MOOD_META[entry.mood].emoji}</span>
           <div className="flex-1">
-            <p className="text-sm font-medium">{MOOD_META[entry.mood].label}</p>
+            <p className={cn("text-sm font-medium", MOOD_COLORS[entry.mood].text)}>{MOOD_META[entry.mood].label}</p>
             {entry.note && <p className="text-sm text-muted">{entry.note}</p>}
           </div>
           <span className="text-xs text-muted">{formatShortDate(entry.loggedAt)}</span>

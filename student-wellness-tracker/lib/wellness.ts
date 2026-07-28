@@ -18,27 +18,109 @@ export function daysAgo(n: number, from = new Date()): Date {
   return startOfDay(d);
 }
 
-export const MOOD_META: Record<Mood, { emoji: string; label: string }> = {
-  HAPPY: { emoji: "😀", label: "Happy" },
-  NEUTRAL: { emoji: "😐", label: "Neutral" },
-  SAD: { emoji: "😔", label: "Sad" },
-  STRESSED: { emoji: "😰", label: "Stressed" },
-  TIRED: { emoji: "😴", label: "Tired" },
-  EXCITED: { emoji: "🤩", label: "Excited" },
-  MOTIVATED: { emoji: "😎", label: "Motivated" },
+export const MOOD_META: Record<Mood, { emoji: string; label: string; description: string; prompt: string }> = {
+  AMAZING: {
+    emoji: "😄",
+    label: "Amazing",
+    description: "Everything's going great",
+    prompt: "🎉 That's awesome! What made today great?",
+  },
+  HAPPY: {
+    emoji: "😊",
+    label: "Happy",
+    description: "Feeling good today",
+    prompt: "😊 Great to hear! What's contributing to that?",
+  },
+  GOOD: {
+    emoji: "🙂",
+    label: "Good",
+    description: "A solid, steady day",
+    prompt: "🙂 Nice. Anything worth remembering about today?",
+  },
+  OKAY: {
+    emoji: "😐",
+    label: "Okay",
+    description: "Nothing special, nothing bad",
+    prompt: "💭 Anything you'd like to remember about today?",
+  },
+  STRESSED: {
+    emoji: "😟",
+    label: "Stressed",
+    description: "Feeling the pressure",
+    prompt: "🌱 Take a moment. What's been challenging today?",
+  },
+  SAD: {
+    emoji: "😢",
+    label: "Sad",
+    description: "Feeling down today",
+    prompt: "💙 That's okay. Want to jot down what's on your mind?",
+  },
+  OVERWHELMED: {
+    emoji: "😭",
+    label: "Overwhelmed",
+    description: "Too much all at once",
+    prompt: "❤️ Thanks for checking in. Writing a few words might help you reflect.",
+  },
 };
 
 export const ALL_MOODS = Object.keys(MOOD_META) as Mood[];
 
+/** Tailwind classes per mood — written out literally (not interpolated) so
+ * Tailwind's source scanner can actually find and generate them. */
+export const MOOD_COLORS: Record<Mood, { bg: string; text: string; ring: string; selectedBg: string }> = {
+  AMAZING: {
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+    ring: "ring-emerald-400",
+    selectedBg: "bg-emerald-100 dark:bg-emerald-500/20",
+  },
+  HAPPY: {
+    bg: "bg-green-50 dark:bg-green-500/10",
+    text: "text-green-600 dark:text-green-400",
+    ring: "ring-green-400",
+    selectedBg: "bg-green-100 dark:bg-green-500/20",
+  },
+  GOOD: {
+    bg: "bg-lime-50 dark:bg-lime-500/10",
+    text: "text-lime-600 dark:text-lime-400",
+    ring: "ring-lime-400",
+    selectedBg: "bg-lime-100 dark:bg-lime-500/20",
+  },
+  OKAY: {
+    bg: "bg-gray-100 dark:bg-gray-500/10",
+    text: "text-gray-600 dark:text-gray-400",
+    ring: "ring-gray-400",
+    selectedBg: "bg-gray-200 dark:bg-gray-500/20",
+  },
+  STRESSED: {
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+    text: "text-amber-600 dark:text-amber-400",
+    ring: "ring-amber-400",
+    selectedBg: "bg-amber-100 dark:bg-amber-500/20",
+  },
+  SAD: {
+    bg: "bg-orange-50 dark:bg-orange-500/10",
+    text: "text-orange-600 dark:text-orange-400",
+    ring: "ring-orange-400",
+    selectedBg: "bg-orange-100 dark:bg-orange-500/20",
+  },
+  OVERWHELMED: {
+    bg: "bg-red-50 dark:bg-red-500/10",
+    text: "text-red-600 dark:text-red-400",
+    ring: "ring-red-400",
+    selectedBg: "bg-red-100 dark:bg-red-500/20",
+  },
+};
+
 /** 1–5 scale for charting mood trends alongside numeric metrics like sleep/study. */
 export const MOOD_SCORE: Record<Mood, number> = {
-  STRESSED: 1,
+  OVERWHELMED: 1,
   SAD: 2,
-  TIRED: 2,
-  NEUTRAL: 3,
+  STRESSED: 2,
+  OKAY: 3,
+  GOOD: 4,
   HAPPY: 4,
-  MOTIVATED: 4,
-  EXCITED: 5,
+  AMAZING: 5,
 };
 
 /** 0–100 ratio, capped, for combining unlike units (ml, minutes, hours) into one score. */

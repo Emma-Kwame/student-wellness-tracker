@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const moodEntrySchema = z.object({
-  mood: z.enum(["HAPPY", "NEUTRAL", "SAD", "STRESSED", "TIRED", "EXCITED", "MOTIVATED"]),
+  mood: z.enum(["AMAZING", "HAPPY", "GOOD", "OKAY", "STRESSED", "SAD", "OVERWHELMED"]),
   note: z.string().max(500).optional(),
 });
 export type MoodEntryInput = z.infer<typeof moodEntrySchema>;

@@ -136,13 +136,13 @@ model UserProfile {
 // =============================================================================
 
 enum Mood {
+  AMAZING
   HAPPY
-  NEUTRAL
-  SAD
+  GOOD
+  OKAY
   STRESSED
-  TIRED
-  EXCITED
-  MOTIVATED
+  SAD
+  OVERWHELMED
 }
 
 model MoodEntry {
