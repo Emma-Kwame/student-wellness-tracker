@@ -1,12 +1,11 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ExerciseLogForm } from "@/components/trackers/exercise-log-form";
 import { ExerciseHistoryList } from "@/components/trackers/exercise-history-list";
 
 export default async function ExercisePage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const entries = await prisma.exerciseLog.findMany({
     where: { userId: session!.user.id, deletedAt: null },
     orderBy: { loggedAt: "desc" },

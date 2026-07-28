@@ -1,12 +1,11 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { MoodLogForm } from "@/components/trackers/mood-log-form";
 import { MoodHistoryList } from "@/components/trackers/mood-history-list";
 
 export default async function MoodPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const entries = await prisma.moodEntry.findMany({
     where: { userId: session!.user.id, deletedAt: null },
     orderBy: { loggedAt: "desc" },

@@ -6,7 +6,7 @@ import { WaterLogForm } from "@/components/trackers/water-log-form";
 import { WaterHistoryList } from "@/components/trackers/water-history-list";
 
 export default async function WaterPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const entries = await prisma.waterLog.findMany({
     where: { userId: session!.user.id, loggedAt: { gte: startOfDay(), lte: endOfDay() } },
     orderBy: { loggedAt: "desc" },

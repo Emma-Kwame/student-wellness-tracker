@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StudySessionForm } from "@/components/trackers/study-session-form";
@@ -7,7 +6,7 @@ import { CourseForm } from "@/components/trackers/course-form";
 import { StudyHistoryList } from "@/components/trackers/study-history-list";
 
 export default async function StudyPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const userId = session!.user.id;
 
   const [courses, entries] = await Promise.all([

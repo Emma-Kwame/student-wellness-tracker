@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
 
@@ -18,9 +19,7 @@ export function DashboardHeader({ user }: { user: HeaderUser }) {
   return (
     <header className="border-b border-line bg-card/70 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <p className="font-display text-lg tracking-tight">
-          wellness<span className="text-focus">.</span>
-        </p>
+        <Image src="/logo.png" alt="Student Wellness Tracker" width={904} height={240} className="h-8 w-auto" priority />
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <div className="flex items-center gap-3">

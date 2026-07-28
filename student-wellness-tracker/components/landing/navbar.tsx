@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -7,8 +8,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full">
       <div className="container mt-4">
         <nav className="glass flex items-center justify-between rounded-2xl px-4 py-3">
-          <Link href="/" className="font-display text-lg tracking-tight">
-            wellness<span className="text-focus">.</span>
+          <Link href="/" className="flex items-center">
+            <Image src="/logo.png" alt="Student Wellness Tracker" width={904} height={240} className="h-9 w-auto" priority />
           </Link>
           <div className="hidden items-center gap-8 md:flex">
             <Link href="#rhythm" className="text-sm text-muted transition-colors hover:text-ink">

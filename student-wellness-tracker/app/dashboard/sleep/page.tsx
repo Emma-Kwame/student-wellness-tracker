@@ -1,12 +1,11 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SleepLogForm } from "@/components/trackers/sleep-log-form";
 import { SleepHistoryList } from "@/components/trackers/sleep-history-list";
 
 export default async function SleepPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const entries = await prisma.sleepLog.findMany({
     where: { userId: session!.user.id, deletedAt: null },
     orderBy: { bedtime: "desc" },

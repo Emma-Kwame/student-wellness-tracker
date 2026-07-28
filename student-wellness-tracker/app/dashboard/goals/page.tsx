@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getTodayStats } from "@/lib/today-stats";
 import { computeGoalProgress } from "@/lib/wellness";
@@ -8,7 +7,7 @@ import { GoalForm } from "@/components/trackers/goal-form";
 import { GoalList } from "@/components/trackers/goal-list";
 
 export default async function GoalsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const userId = session!.user.id;
 
   const [goals, todayStats] = await Promise.all([
