@@ -6,6 +6,9 @@ import type {
   ExerciseType,
   ExerciseIntensity,
   GoalType,
+  TaskPriority,
+  TaskCategory,
+  TaskStatus,
 } from "@/generated/prisma/client";
 import { formatMinutes } from "@/lib/utils";
 
@@ -398,6 +401,34 @@ export function goalStatusBand(progress: number): { label: string; emoji: string
   if (progress >= 0.75) return { label: "On Track", emoji: "🟢", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" };
   if (progress >= 0.4) return { label: "Needs Attention", emoji: "🟡", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-400" };
   return { label: "Behind", emoji: "🔴", text: "text-red-600 dark:text-red-400", dot: "bg-red-500" };
+}
+
+export const TASK_CATEGORY_META: Record<TaskCategory, { emoji: string; label: string }> = {
+  ACADEMIC: { emoji: "📘", label: "Academic" },
+  PERSONAL: { emoji: "🧘", label: "Personal" },
+  HEALTH: { emoji: "💪", label: "Health" },
+  SOCIAL: { emoji: "👥", label: "Social" },
+  OTHER: { emoji: "📌", label: "Other" },
+};
+
+export const TASK_PRIORITY_META: Record<TaskPriority, { emoji: string; label: string; text: string; bg: string }> = {
+  LOW: { emoji: "🟢", label: "Low", text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+  MEDIUM: { emoji: "🔵", label: "Medium", text: "text-focus", bg: "bg-focus/10" },
+  HIGH: { emoji: "🟠", label: "High", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10" },
+  URGENT: { emoji: "🔴", label: "Urgent", text: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-500/10" },
+};
+
+export const TASK_STATUS_META: Record<TaskStatus, { emoji: string; label: string; text: string }> = {
+  NOT_STARTED: { emoji: "🟡", label: "Not Started", text: "text-amber-600 dark:text-amber-400" },
+  IN_PROGRESS: { emoji: "🔵", label: "In Progress", text: "text-focus" },
+  COMPLETED: { emoji: "🟢", label: "Completed", text: "text-emerald-600 dark:text-emerald-400" },
+};
+
+/** Overdue overrides the stored status for display purposes — it's derived
+ * from dueDate, not stored, so it can never go stale. */
+export function effectiveTaskStatus(status: TaskStatus, dueDate: Date | null): TaskStatus | "OVERDUE" {
+  if (status !== "COMPLETED" && dueDate && dueDate.getTime() < startOfDay().getTime()) return "OVERDUE";
+  return status;
 }
 
 const QUOTES = [

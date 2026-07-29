@@ -67,9 +67,11 @@ export type AttendanceRecordInput = z.infer<typeof attendanceRecordSchema>;
 export const taskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(1000).optional(),
+  link: z.string().max(500).optional(),
   dueDate: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
   category: z.enum(["ACADEMIC", "PERSONAL", "HEALTH", "SOCIAL", "OTHER"]),
+  recurrence: z.enum(["NONE", "DAILY", "WEEKLY", "MONTHLY"]).optional(),
 });
 export type TaskInput = z.infer<typeof taskSchema>;
 

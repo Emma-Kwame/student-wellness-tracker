@@ -343,18 +343,34 @@ enum TaskCategory {
   OTHER
 }
 
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskRecurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
 model Task {
-  id          String       @id @default(cuid())
+  id          String         @id @default(cuid())
   userId      String
   title       String
   description String?
+  link        String? // optional URL attachment — e.g. a Moodle link or shared doc
   dueDate     DateTime?
-  priority    TaskPriority @default(MEDIUM)
-  category    TaskCategory @default(ACADEMIC)
-  isCompleted Boolean      @default(false)
+  priority    TaskPriority   @default(MEDIUM)
+  category    TaskCategory   @default(ACADEMIC)
+  status      TaskStatus     @default(NOT_STARTED)
+  recurrence  TaskRecurrence @default(NONE)
+  isCompleted Boolean        @default(false)
   completedAt DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   deletedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
