@@ -83,5 +83,7 @@ export const goalSchema = z.object({
   type: z.enum(["STUDY_HOURS", "WATER_GLASSES", "SLEEP_HOURS", "EXERCISE_MINUTES", "CUSTOM"]),
   label: z.string().min(1, "Give it a short label").max(120),
   targetValue: z.coerce.number().positive().max(10000),
+  unit: z.string().max(30).optional(),
+  reminderTime: z.string().max(5).optional(),
 });
 export type GoalInput = z.infer<typeof goalSchema>;

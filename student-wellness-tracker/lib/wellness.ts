@@ -5,6 +5,7 @@ import type {
   Restedness,
   ExerciseType,
   ExerciseIntensity,
+  GoalType,
 } from "@/generated/prisma/client";
 import { formatMinutes } from "@/lib/utils";
 
@@ -372,6 +373,31 @@ export function computeGoalProgress<T extends GoalLike>(goal: T, stats: TodaySta
   if (goal.type === "SLEEP_HOURS") current = stats.sleepHours;
   if (goal.type === "EXERCISE_MINUTES") current = stats.exerciseMinutes;
   return { ...goal, currentValue: current, progress: Math.min(1, current / goal.targetValue) };
+}
+
+export const GOAL_TYPE_META: Record<GoalType, { emoji: string; label: string; unit: string }> = {
+  STUDY_HOURS: { emoji: "📚", label: "Study Hours", unit: "hours/day" },
+  WATER_GLASSES: { emoji: "💧", label: "Hydration", unit: "glasses/day" },
+  SLEEP_HOURS: { emoji: "😴", label: "Sleep", unit: "hours/night" },
+  EXERCISE_MINUTES: { emoji: "🏃", label: "Exercise", unit: "minutes/day" },
+  CUSTOM: { emoji: "🎯", label: "Custom", unit: "" },
+};
+
+/** Links a goal type to the tracker page with its real weekly chart, instead
+ * of building a second, duplicate chart just for the goals page. */
+export const GOAL_TYPE_TRACKER_HREF: Record<GoalType, string | null> = {
+  STUDY_HOURS: "/dashboard/study",
+  WATER_GLASSES: "/dashboard/water",
+  SLEEP_HOURS: "/dashboard/sleep",
+  EXERCISE_MINUTES: "/dashboard/exercise",
+  CUSTOM: null,
+};
+
+export function goalStatusBand(progress: number): { label: string; emoji: string; text: string; dot: string } {
+  if (progress >= 1) return { label: "Goal Met", emoji: "🎉", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" };
+  if (progress >= 0.75) return { label: "On Track", emoji: "🟢", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" };
+  if (progress >= 0.4) return { label: "Needs Attention", emoji: "🟡", text: "text-amber-600 dark:text-amber-400", dot: "bg-amber-400" };
+  return { label: "Behind", emoji: "🔴", text: "text-red-600 dark:text-red-400", dot: "bg-red-500" };
 }
 
 const QUOTES = [
