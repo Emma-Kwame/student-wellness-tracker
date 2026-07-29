@@ -174,4 +174,14 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Used by "Print Report" buttons — hides chrome and controls, keeps the
+     printed page to just the report content. */
+  @media print {
+    aside,
+    header,
+    .no-print {
+      display: none !important;
+    }
+  }
 }

@@ -23,3 +23,10 @@ export function formatShortDate(date: Date | string): string {
     day: "numeric",
   });
 }
+
+/** Formats a date as "29/07/2026" for tabular data (attendance records, exports). */
+export function formatDMY(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
+}

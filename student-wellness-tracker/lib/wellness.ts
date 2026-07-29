@@ -340,6 +340,21 @@ export function computeAttendanceRate(records: { status: AttendanceStatus }[]): 
   return Math.round((present / counted.length) * 100);
 }
 
+export function attendanceBand(rate: number): { label: string; dot: string; text: string; bar: string } {
+  if (rate >= 75) return { label: "Above 75%", dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" };
+  if (rate >= 60) return { label: "Between 60–75%", dot: "bg-amber-400", text: "text-amber-600 dark:text-amber-400", bar: "bg-amber-400" };
+  return { label: "Below 60%", dot: "bg-red-500", text: "text-red-600 dark:text-red-400", bar: "bg-red-500" };
+}
+
+/** How many more PRESENT marks (assuming no further absences) would bring
+ * the rate up to `thresholdPct`. Returns 0 if already there or above. */
+export function classesToReachThreshold(present: number, countedTotal: number, thresholdPct: number): number {
+  const target = thresholdPct / 100;
+  if (target >= 1) return Infinity;
+  const needed = (target * countedTotal - present) / (1 - target);
+  return Math.max(0, Math.ceil(needed));
+}
+
 export interface GoalLike {
   type: "STUDY_HOURS" | "WATER_GLASSES" | "SLEEP_HOURS" | "EXERCISE_MINUTES" | "CUSTOM";
   targetValue: number;
