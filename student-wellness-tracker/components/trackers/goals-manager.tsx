@@ -6,7 +6,7 @@ import { Pencil, Pause, Play, RotateCcw } from "lucide-react";
 import { createGoal, updateGoal, toggleGoal, deleteGoal } from "@/app/actions/goals";
 import { DeleteButton } from "@/components/dashboard/delete-button";
 import { Input } from "@/components/ui/input";
-import { Label, FieldError } from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GOAL_TYPE_META, GOAL_TYPE_TRACKER_HREF, goalStatusBand } from "@/lib/wellness";
@@ -185,6 +185,28 @@ export function GoalsManager({
 
   return (
     <div className="space-y-6">
+      {recommendations.length > 0 && (
+        <div className="rounded-xl border border-dashed border-focus/40 bg-focus/5 p-4">
+          <p className="text-sm font-medium">Based on your habits</p>
+          <p className="text-xs text-muted">Recommended targets from your last 7 days — tap to prefill the form below.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {recommendations.map((rec) => {
+              const meta = GOAL_TYPE_META[rec.type];
+              return (
+                <button
+                  key={rec.type}
+                  type="button"
+                  onClick={() => applyRecommendation(rec)}
+                  className="rounded-full border border-line bg-card px-3 py-1.5 text-sm transition-colors hover:bg-ink/5"
+                >
+                  {meta.emoji} {meta.label}: {rec.suggestedTarget} {meta.unit}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-line p-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
