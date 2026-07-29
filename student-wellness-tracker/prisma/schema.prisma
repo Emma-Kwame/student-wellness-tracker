@@ -381,9 +381,13 @@ model Goal {
   userId       String
   type         GoalType
   label        String
+  unit         String? // display unit for CUSTOM goals, e.g. "pages" — typed goals infer their unit from `type`
   targetValue  Float
   currentValue Float     @default(0)
   isActive     Boolean   @default(true)
+  // Stored for the user's reference; not yet wired to an actual notification
+  // delivery mechanism — this app has no background job/scheduler yet.
+  reminderTime String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?

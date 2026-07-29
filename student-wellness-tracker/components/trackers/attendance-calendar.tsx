@@ -6,11 +6,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/generated/prisma/client";
 
-type Record = { status: AttendanceStatus; date: Date };
+type AttendanceEntry = { status: AttendanceStatus; date: Date };
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
-function dayStatus(records: Record[]): "present" | "absent" | "excused" | null {
+function dayStatus(records: AttendanceEntry[]): "present" | "absent" | "excused" | null {
   if (records.length === 0) return null;
   if (records.some((r) => r.status === "ABSENT")) return "absent";
   if (records.some((r) => r.status === "PRESENT" || r.status === "LATE")) return "present";
@@ -23,7 +23,7 @@ const STATUS_STYLE: Record<"present" | "absent" | "excused", string> = {
   excused: "bg-amber-400 text-white",
 };
 
-export function AttendanceCalendar({ records }: { records: Record[] }) {
+export function AttendanceCalendar({ records }: { records: AttendanceEntry[] }) {
   // Attendance dates are stored as UTC midnight (see app/actions/attendance.ts),
   // so all calendar math here stays in UTC too — mixing in local-time Date
   // getters would misattribute boundary days for users behind UTC.
@@ -37,7 +37,7 @@ export function AttendanceCalendar({ records }: { records: Record[] }) {
   const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   const today = new Date();
 
-  const recordsByDay = new Map<number, Record[]>();
+  const recordsByDay = new Map<number, AttendanceEntry[]>();
   for (const r of records) {
     if (r.date.getUTCFullYear() === year && r.date.getUTCMonth() === month) {
       const day = r.date.getUTCDate();
@@ -52,19 +52,19 @@ export function AttendanceCalendar({ records }: { records: Record[] }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>
-          {cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          {new Date(Date.UTC(year, month, 1)).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}
         </CardTitle>
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={() => setCursor(new Date(year, month - 1, 1))}
+            onClick={() => setCursor(month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 })}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-ink/5"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
-            onClick={() => setCursor(new Date(year, month + 1, 1))}
+            onClick={() => setCursor(month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 })}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-ink/5"
           >
             <ChevronRight className="h-4 w-4" />

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { formatDMY, cn } from "@/lib/utils";
 
 type Course = { id: string; name: string; color: string };
-type Record = { id: string; courseId: string; status: AttendanceStatus; date: Date };
+type AttendanceEntry = { id: string; courseId: string; status: AttendanceStatus; date: Date };
 
 const STATUSES: AttendanceStatus[] = ["PRESENT", "ABSENT", "EXCUSED", "LATE"];
 const STATUS_META: Record<AttendanceStatus, { emoji: string; label: string }> = {
@@ -28,8 +28,8 @@ function toDateInput(date: Date): string {
 
 /** Cumulative attendance % for each course, as of (and including) each record —
  * computed in chronological order so the table's % column tells a real story. */
-function computeRunningRates(records: Record[]): Map<string, number> {
-  const byCourse = new Map<string, Record[]>();
+function computeRunningRates(records: AttendanceEntry[]): Map<string, number> {
+  const byCourse = new Map<string, AttendanceEntry[]>();
   for (const r of records) {
     if (!byCourse.has(r.courseId)) byCourse.set(r.courseId, []);
     byCourse.get(r.courseId)!.push(r);
@@ -50,7 +50,7 @@ function computeRunningRates(records: Record[]): Map<string, number> {
   return rateById;
 }
 
-export function AttendanceManager({ courses, records }: { courses: Course[]; records: Record[] }) {
+export function AttendanceManager({ courses, records }: { courses: Course[]; records: AttendanceEntry[] }) {
   const today = toDateInput(new Date());
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
   const [date, setDate] = useState(today);
@@ -82,7 +82,7 @@ export function AttendanceManager({ courses, records }: { courses: Course[]; rec
     setEditingId(null);
   }
 
-  function startEdit(record: Record) {
+  function startEdit(record: AttendanceEntry) {
     setEditingId(record.id);
     setCourseId(record.courseId);
     setDate(toDateInput(record.date));
