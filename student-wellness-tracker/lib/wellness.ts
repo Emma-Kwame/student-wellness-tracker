@@ -1,4 +1,12 @@
-import type { Mood, AttendanceStatus, SleepQuality, Restedness } from "@/generated/prisma/client";
+import type {
+  Mood,
+  AttendanceStatus,
+  SleepQuality,
+  Restedness,
+  ExerciseType,
+  ExerciseIntensity,
+} from "@/generated/prisma/client";
+import { formatMinutes } from "@/lib/utils";
 
 export function startOfDay(date = new Date()): Date {
   const d = new Date(date);
@@ -235,6 +243,60 @@ const SLEEP_TIPS = [
 export function sleepTipOfTheDay(date = new Date()): string {
   const dayIndex = Math.floor(date.getTime() / 86_400_000);
   return SLEEP_TIPS[dayIndex % SLEEP_TIPS.length]!;
+}
+
+export const EXERCISE_TYPE_META: Record<ExerciseType, { emoji: string; label: string }> = {
+  WALKING: { emoji: "🚶", label: "Walking" },
+  RUNNING: { emoji: "🏃", label: "Running" },
+  CYCLING: { emoji: "🚴", label: "Cycling" },
+  GYM: { emoji: "🏋️", label: "Gym" },
+  FOOTBALL: { emoji: "⚽", label: "Football" },
+  YOGA: { emoji: "🧘", label: "Yoga" },
+  BASKETBALL: { emoji: "🏀", label: "Basketball" },
+  OTHER: { emoji: "➕", label: "Other" },
+};
+
+export const ALL_EXERCISE_TYPES = Object.keys(EXERCISE_TYPE_META) as ExerciseType[];
+
+export const EXERCISE_INTENSITY_META: Record<ExerciseIntensity, { emoji: string; label: string; dot: string }> = {
+  LOW: { emoji: "🟢", label: "Light", dot: "bg-emerald-500" },
+  MODERATE: { emoji: "🟡", label: "Moderate", dot: "bg-amber-400" },
+  HIGH: { emoji: "🔴", label: "Intense", dot: "bg-red-500" },
+};
+
+export const ALL_EXERCISE_INTENSITIES = Object.keys(EXERCISE_INTENSITY_META) as ExerciseIntensity[];
+
+// MET (metabolic equivalent) per activity/intensity — standard exercise-physiology
+// reference values. Calories = MET × 3.5 × bodyweight(kg) / 200 × minutes.
+const MET_TABLE: Record<ExerciseType, Record<ExerciseIntensity, number>> = {
+  WALKING: { LOW: 2.8, MODERATE: 3.5, HIGH: 4.5 },
+  RUNNING: { LOW: 6.0, MODERATE: 9.0, HIGH: 12.0 },
+  CYCLING: { LOW: 4.0, MODERATE: 8.0, HIGH: 10.0 },
+  GYM: { LOW: 3.0, MODERATE: 5.0, HIGH: 6.5 },
+  FOOTBALL: { LOW: 5.0, MODERATE: 7.0, HIGH: 10.0 },
+  YOGA: { LOW: 2.0, MODERATE: 3.0, HIGH: 4.0 },
+  BASKETBALL: { LOW: 4.5, MODERATE: 6.5, HIGH: 8.0 },
+  OTHER: { LOW: 3.0, MODERATE: 5.0, HIGH: 7.0 },
+};
+
+// We don't collect body weight, so this assumes an average 70kg adult — it's a
+// starting estimate the student can (and should) overwrite, not a personalized figure.
+const ASSUMED_BODYWEIGHT_KG = 70;
+
+export function estimateExerciseCalories(type: ExerciseType, intensity: ExerciseIntensity, durationMin: number): number {
+  const met = MET_TABLE[type][intensity];
+  return Math.round(((met * 3.5 * ASSUMED_BODYWEIGHT_KG) / 200) * durationMin);
+}
+
+export function exerciseMotivationMessage(durationMin: number, weeklyMinutesSoFar: number, weeklyGoalMin: number): string {
+  const remaining = weeklyGoalMin - weeklyMinutesSoFar;
+  if (weeklyMinutesSoFar >= weeklyGoalMin) {
+    return `🎉 Nice work! You exercised for ${formatMinutes(durationMin)} today — and you've hit your weekly goal.`;
+  }
+  if (remaining <= 30) {
+    return `💪 Great consistency. You're only ${remaining} minutes away from your weekly goal.`;
+  }
+  return `🎉 Nice work! You exercised for ${formatMinutes(durationMin)} today. Keep it up!`;
 }
 
 /** 0–100 ratio, capped, for combining unlike units (ml, minutes, hours) into one score. */

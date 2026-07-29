@@ -30,7 +30,7 @@ export const waterGoalSchema = z.object({
 export type WaterGoalInput = z.infer<typeof waterGoalSchema>;
 
 export const exerciseLogSchema = z.object({
-  type: z.enum(["WALKING", "RUNNING", "GYM", "FOOTBALL", "CYCLING", "YOGA", "OTHER"]),
+  type: z.enum(["WALKING", "RUNNING", "GYM", "FOOTBALL", "CYCLING", "YOGA", "BASKETBALL", "OTHER"]),
   durationMin: z.coerce.number().int().min(1).max(600),
   calories: z.coerce.number().int().min(0).max(5000).optional(),
   intensity: z.enum(["LOW", "MODERATE", "HIGH"]),
