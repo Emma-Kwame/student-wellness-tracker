@@ -374,3 +374,59 @@ export function quoteOfTheDay(date = new Date()): string {
   const dayIndex = Math.floor(date.getTime() / 86_400_000);
   return QUOTES[dayIndex % QUOTES.length]!;
 }
+
+const STUDY_QUOTES = [
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+  { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
+  { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+  { text: "Well begun is half done.", author: "Aristotle" },
+  { text: "The expert in anything was once a beginner.", author: "Helen Hayes" },
+  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+  { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
+] as const;
+
+/** Deterministic by date, not random — same quote all day, changes tomorrow. */
+export function studyQuoteOfTheDay(date = new Date()): { text: string; author: string } {
+  const dayIndex = Math.floor(date.getTime() / 86_400_000);
+  return STUDY_QUOTES[dayIndex % STUDY_QUOTES.length]!;
+}
+
+const STUDY_HOUR_WINDOWS = [
+  { label: "Early morning (5 AM–8 AM)", start: 5, end: 8 },
+  { label: "Morning (8 AM–11 AM)", start: 8, end: 11 },
+  { label: "Midday (11 AM–2 PM)", start: 11, end: 14 },
+  { label: "Afternoon (2 PM–5 PM)", start: 14, end: 17 },
+  { label: "Evening (5 PM–8 PM)", start: 17, end: 20 },
+  { label: "Night (8 PM–11 PM)", start: 20, end: 23 },
+  { label: "Late night (11 PM–5 AM)", start: 23, end: 29 }, // wraps past midnight
+] as const;
+
+export interface StudyInsights {
+  bestWindowLabel: string;
+  avgMinutes: number;
+  longestMinutes: number;
+}
+
+/** Computed from the student's own history — not a generic claim. Returns
+ * null until there's enough data (3+ sessions) for the numbers to mean anything. */
+export function computeStudyInsights(sessions: { startedAt: Date; durationMin: number | null }[]): StudyInsights | null {
+  const timed = sessions.filter((s): s is { startedAt: Date; durationMin: number } => (s.durationMin ?? 0) > 0);
+  if (timed.length < 3) return null;
+
+  const windowTotals = STUDY_HOUR_WINDOWS.map(() => 0);
+  for (const s of timed) {
+    const hour = s.startedAt.getHours();
+    const normalizedHour = hour < 5 ? hour + 24 : hour; // fold early-AM hours into the "late night" window
+    const idx = STUDY_HOUR_WINDOWS.findIndex((w) => normalizedHour >= w.start && normalizedHour < w.end);
+    if (idx >= 0) windowTotals[idx] = windowTotals[idx]! + s.durationMin;
+  }
+  const bestIdx = windowTotals.indexOf(Math.max(...windowTotals));
+
+  const totalMinutes = timed.reduce((sum, s) => sum + s.durationMin, 0);
+
+  return {
+    bestWindowLabel: STUDY_HOUR_WINDOWS[bestIdx]!.label,
+    avgMinutes: Math.round(totalMinutes / timed.length),
+    longestMinutes: Math.max(...timed.map((s) => s.durationMin)),
+  };
+}
