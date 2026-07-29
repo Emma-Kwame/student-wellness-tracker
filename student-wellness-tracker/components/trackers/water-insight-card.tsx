@@ -22,10 +22,10 @@ export function WaterInsightCard({ entries, todayMl, goalMl }: { entries: Entry[
   }
 
   if (entries.length > 0) {
-    const totals: Record<string, number> = { morning: 0, afternoon: 0, evening: 0 };
+    const totals: Record<"morning" | "afternoon" | "evening", number> = { morning: 0, afternoon: 0, evening: 0 };
     for (const entry of entries) totals[timeBucket(entry.loggedAt)] += entry.amountMl;
-    const [topBucket] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0]!;
-    if (totals[topBucket]! > 0) {
+    const [topBucket, topTotal] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0]!;
+    if (topTotal > 0) {
       const label = topBucket.charAt(0).toUpperCase() + topBucket.slice(1);
       insights.push(`💡 Most of your water today was logged in the ${label.toLowerCase()}.`);
     }
