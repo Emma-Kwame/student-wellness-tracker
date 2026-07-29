@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/auth-utils";
-import { waterLogSchema } from "@/lib/validations/trackers";
+import { waterLogSchema, waterGoalSchema } from "@/lib/validations/trackers";
 
 export async function logWater(amountMl: number) {
   const userId = await requireUserId();
@@ -11,6 +11,19 @@ export async function logWater(amountMl: number) {
 
   await prisma.waterLog.create({
     data: { userId, amountMl: data.amountMl },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/water");
+}
+
+export async function updateWaterGoal(goalMl: number) {
+  const userId = await requireUserId();
+  const data = waterGoalSchema.parse({ goalMl });
+
+  await prisma.userProfile.update({
+    where: { userId },
+    data: { dailyWaterGoalMl: data.goalMl },
   });
 
   revalidatePath("/dashboard");

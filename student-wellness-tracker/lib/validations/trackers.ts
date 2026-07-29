@@ -24,6 +24,11 @@ export const waterLogSchema = z.object({
 });
 export type WaterLogInput = z.infer<typeof waterLogSchema>;
 
+export const waterGoalSchema = z.object({
+  goalMl: z.coerce.number().int().min(250, "At least 250 ml").max(10000, "That's more than 10L — double check"),
+});
+export type WaterGoalInput = z.infer<typeof waterGoalSchema>;
+
 export const exerciseLogSchema = z.object({
   type: z.enum(["WALKING", "RUNNING", "GYM", "FOOTBALL", "CYCLING", "YOGA", "OTHER"]),
   durationMin: z.coerce.number().int().min(1).max(600),

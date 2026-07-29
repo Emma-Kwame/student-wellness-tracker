@@ -33,13 +33,19 @@ export function WaterWidget({ todayMl, goalMl }: { todayMl: number; goalMl: numb
         <Droplets className="h-4 w-4 text-vitality" />
       </CardHeader>
       <CardContent>
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-display text-2xl">{(todayMl / 1000).toFixed(2)}L</span>
-          <span className="text-sm text-muted">of {(goalMl / 1000).toFixed(1)}L</span>
+        <div className="flex items-baseline justify-between gap-1.5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display text-2xl">{(todayMl / 1000).toFixed(1)}L</span>
+            <span className="text-sm text-muted">of {(goalMl / 1000).toFixed(1)}L</span>
+          </div>
+          <span className="text-sm font-medium text-vitality">{pct}%</span>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/5">
-          <div className="h-full rounded-full bg-vitality transition-all" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bg-vitality transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
+        <p className="mt-1.5 text-xs text-muted">
+          {todayMl >= goalMl ? "🎉 Goal reached!" : `${goalMl - todayMl} ml remaining`}
+        </p>
         <div className="mt-4 flex gap-2">
           {PRESETS.map((p) => (
             <Button key={p.ml} size="sm" variant="outline" disabled={isPending} onClick={() => handleAdd(p.ml)}>
